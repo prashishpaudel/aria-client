@@ -6,7 +6,7 @@ Streams microphone audio over WebSocket to a backend running **Parakeet STT → 
 
 ## Stack
 
-- **Frontend:** React + Vite
+- **Frontend:** React + TypeScript + Vite
 - **Transport:** WebSocket (mic audio out, streamed audio/transcript in)
 - **Backend (separate repo):** Parakeet STT, Qwen LLM, Kokoro TTS
 
@@ -19,16 +19,31 @@ Streams microphone audio over WebSocket to a backend running **Parakeet STT → 
 
 ## Getting Started
 
+### Prerequisites
+
+- Node.js 18+
+- Backend running (see backend repo)
+
+### Setup
+
 ```bash
 npm install
-npm run dev
 ```
 
-Set backend WebSocket URL in `.env`:
+Create `.env` in project root:
 
 ```env
 VITE_WS_URL=ws://localhost:8000/ws
 ```
+
+### Commands
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start dev server at `http://localhost:5173` |
+| `npm run build` | Production build → `dist/` |
+| `npm run preview` | Preview production build locally |
+| `npm run lint` | Run ESLint |
 
 ## Project Structure
 
