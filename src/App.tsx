@@ -1,34 +1,39 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { createTheme, ThemeProvider, CssBaseline } from '@mui/material'
-import AppBar from '@mui/material/AppBar'
-import Toolbar from '@mui/material/Toolbar'
-import Typography from '@mui/material/Typography'
-import IconButton from '@mui/material/IconButton'
-import LightModeIcon from '@mui/icons-material/LightMode'
-import DarkModeIcon from '@mui/icons-material/DarkMode'
+import Box from '@mui/material/Box'
 import { useTheme } from './hooks/useTheme'
+import Sidebar from './components/Sidebar'
 
 function App() {
   const { theme, toggle } = useTheme()
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   const muiTheme = useMemo(
-    () => createTheme({ palette: { mode: theme } }),
+    () =>
+      createTheme({
+        palette: {
+          mode: theme,
+          primary: {
+            main: theme === 'light' ? '#000000' : '#ffffff',
+          },
+        },
+      }),
     [theme],
   )
 
   return (
     <ThemeProvider theme={muiTheme}>
       <CssBaseline />
-      <AppBar position="static" elevation={0} variant="outlined">
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>
-            Aria
-          </Typography>
-          <IconButton onClick={toggle} aria-label="Toggle theme" color="inherit">
-            {theme === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
-          </IconButton>
-        </Toolbar>
-      </AppBar>
+      <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+        <Sidebar
+          open={sidebarOpen}
+          theme={theme}
+          onToggleSidebar={() => setSidebarOpen((o) => !o)}
+          onToggleTheme={toggle}
+        />
+
+        <Box component="main" sx={{ flexGrow: 1, overflow: 'auto' }} />
+      </Box>
     </ThemeProvider>
   )
 }
