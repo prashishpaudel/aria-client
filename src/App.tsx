@@ -3,6 +3,7 @@ import { createTheme, ThemeProvider, CssBaseline } from '@mui/material'
 import Box from '@mui/material/Box'
 import { useTheme } from './hooks/useTheme'
 import Sidebar from './components/Sidebar'
+import ChatArea from './components/ChatArea'
 
 function App() {
   const { theme, toggle } = useTheme()
@@ -32,7 +33,9 @@ function App() {
           onToggleTheme={toggle}
         />
 
-        <Box component="main" sx={{ flexGrow: 1, overflow: 'auto' }} />
+        <Box component="main" sx={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <ChatArea />
+        </Box>
       </Box>
     </ThemeProvider>
   )
