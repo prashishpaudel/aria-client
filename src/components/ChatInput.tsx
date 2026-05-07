@@ -1,4 +1,4 @@
-import { useState, KeyboardEvent } from 'react'
+import { useState, type KeyboardEvent } from 'react'
 import Box from '@mui/material/Box'
 import IconButton from '@mui/material/IconButton'
 import InputBase from '@mui/material/InputBase'

@@ -1,30 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import type { Message } from '../types/chat'
 import ChatInput from './ChatInput'
-
-const MOCK_MESSAGES: Message[] = [
-  {
-    id: '1',
-    role: 'assistant',
-    content: 'Hi! I\'m Aria. You can type or hold the mic button to talk.',
-    timestamp: new Date(),
-  },
-  {
-    id: '2',
-    role: 'user',
-    content: 'Hello, can you hear me?',
-    timestamp: new Date(),
-  },
-  {
-    id: '3',
-    role: 'assistant',
-    content: 'Loud and clear! How can I help you today?',
-    timestamp: new Date(),
-  },
-]
+import ariaLogo from '../assets/aria-logo.svg'
 
 function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === 'user'
@@ -64,22 +44,34 @@ function MessageBubble({ message }: { message: Message }) {
   )
 }
 
-export default function ChatArea() {
-  const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES)
+function WelcomeScreen({ onSend }: { onSend: (text: string) => void }) {
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', px: 2, gap: 3 }}>
+      <img src={ariaLogo} alt="Aria" style={{ width: 80, height: 80 }} />
+      <Typography variant="h5" sx={{ fontWeight: 600, textAlign: 'center' }}>
+        What's on your mind?
+      </Typography>
+      <Box sx={{ width: '100%', maxWidth: 640 }}>
+        <ChatInput onSend={onSend} />
+      </Box>
+    </Box>
+  )
+}
+
+interface ChatAreaProps {
+  messages: Message[]
+  onSend: (text: string) => void
+}
+
+export default function ChatArea({ messages, onSend }: ChatAreaProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const handleSend = (text: string) => {
-    const userMsg: Message = {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content: text,
-      timestamp: new Date(),
-    }
-    setMessages((prev) => [...prev, userMsg])
+  if (messages.length === 0) {
+    return <WelcomeScreen onSend={onSend} />
   }
 
   return (
@@ -90,8 +82,7 @@ export default function ChatArea() {
         ))}
         <div ref={bottomRef} />
       </Box>
-
-      <ChatInput onSend={handleSend} />
+      <ChatInput onSend={onSend} />
     </Box>
   )
 }

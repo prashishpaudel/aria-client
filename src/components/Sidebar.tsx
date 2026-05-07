@@ -29,9 +29,10 @@ interface SidebarProps {
   theme: 'light' | 'dark'
   onToggleSidebar: () => void
   onToggleTheme: () => void
+  onNewChat: () => void
 }
 
-export default function Sidebar({ open, theme, onToggleSidebar, onToggleTheme }: SidebarProps) {
+export default function Sidebar({ open, theme, onToggleSidebar, onToggleTheme, onNewChat }: SidebarProps) {
   return (
     <Drawer
       variant="permanent"
@@ -79,7 +80,7 @@ export default function Sidebar({ open, theme, onToggleSidebar, onToggleTheme }:
       {/* New chat */}
       <Box sx={{ px: 1, pt: 1, pb: 0.5 }}>
         <Tooltip title={open ? '' : 'New chat'} placement="right">
-          <ListItemButton onClick={() => {}} sx={{ borderRadius: 1, gap: 1, px: 1, minHeight: 40 }}>
+          <ListItemButton onClick={onNewChat} sx={{ borderRadius: 1, gap: 1, px: 1, minHeight: 40 }}>
             <AddCircleIcon fontSize="small" sx={{ flexShrink: 0 }} />
             {open && (
               <Typography variant="body2" sx={{ fontWeight: 500, whiteSpace: 'nowrap' }}>
