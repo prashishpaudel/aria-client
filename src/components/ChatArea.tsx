@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import ReactMarkdown from 'react-markdown'
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
@@ -45,11 +46,48 @@ function MessageBubble({ message }: { message: Message }) {
           color: isUser ? 'primary.contrastText' : 'text.primary',
           maxWidth: '75%',
           opacity: message.partial ? 0.85 : 1,
+          fontSize: 14,
+          lineHeight: 1.6,
+          '& p': { m: 0, mb: 0.75, '&:last-child': { mb: 0 } },
+          '& ol, & ul': { pl: 2.5, m: 0, mb: 0.75 },
+          '& li': { mb: 0.25 },
+          '& pre': {
+            bgcolor: 'background.default',
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 1,
+            p: 1.5,
+            my: 1,
+            overflowX: 'auto',
+            fontSize: 13,
+            fontFamily: 'monospace',
+            whiteSpace: 'pre',
+          },
+          '& code': {
+            fontFamily: 'monospace',
+            fontSize: 13,
+            bgcolor: 'background.default',
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 0.5,
+            px: 0.5,
+          },
+          '& pre code': {
+            bgcolor: 'transparent',
+            border: 'none',
+            p: 0,
+          },
+          '& strong': { fontWeight: 600 },
+          '& em': { fontStyle: 'italic' },
         }}
       >
-        <Typography variant="body2" sx={{ lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-          {message.content}
-        </Typography>
+        {isUser ? (
+          <Typography variant="body2" sx={{ lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+            {message.content}
+          </Typography>
+        ) : (
+          <ReactMarkdown>{message.content}</ReactMarkdown>
+        )}
       </Box>
     </Box>
   )
