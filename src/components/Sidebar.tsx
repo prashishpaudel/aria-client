@@ -8,6 +8,7 @@ import ListItemButton from '@mui/material/ListItemButton'
 import ListItemText from '@mui/material/ListItemText'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
+import ariaLogo from '../assets/aria-logo.svg'
 import AddCircleIcon from '@mui/icons-material/AddCircle'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
 import ForumOutlinedIcon from '@mui/icons-material/ForumOutlined'
@@ -51,17 +52,26 @@ export default function Sidebar({ open, theme, onToggleSidebar, onToggleTheme }:
       }}
     >
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', px: 1, py: 1.5, minHeight: 56 }}>
-        {open && (
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, flexGrow: 1, pl: 1, whiteSpace: 'nowrap' }}>
-            Aria
-          </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', px: 1, py: 1, minHeight: 56, gap: 1 }}>
+        {open ? (
+          <>
+            <img src={ariaLogo} alt="Aria" style={{ width: 48, height: 48, flexShrink: 0 }} />
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, flexGrow: 1, whiteSpace: 'nowrap' }}>
+              Aria
+            </Typography>
+            <Tooltip title="Collapse" placement="right">
+              <IconButton onClick={onToggleSidebar} aria-label="Collapse sidebar" size="small">
+                <ViewSidebarOutlinedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </>
+        ) : (
+          <Tooltip title="Expand" placement="right">
+            <IconButton onClick={onToggleSidebar} aria-label="Expand sidebar">
+              <ViewSidebarOutlinedIcon />
+            </IconButton>
+          </Tooltip>
         )}
-        <Tooltip title={open ? 'Collapse' : 'Expand'} placement="right">
-          <IconButton onClick={onToggleSidebar} aria-label="Toggle sidebar">
-            <ViewSidebarOutlinedIcon />
-          </IconButton>
-        </Tooltip>
       </Box>
 
       <Divider />
