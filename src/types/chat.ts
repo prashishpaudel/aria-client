@@ -5,4 +5,5 @@ export interface Message {
   role: Role
   content: string
   timestamp: Date
+  partial?: boolean
 }

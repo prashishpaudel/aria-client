@@ -3,8 +3,18 @@ import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import type { Message } from '../types/chat'
+import type { PipelineState } from '../types/server'
 import ChatInput from './ChatInput'
 import ariaLogo from '../assets/aria-logo.svg'
+
+interface MicProps {
+  onMicStart: () => void
+  onMicEnd: () => void
+  onInterrupt: () => void
+  micLevel: number
+  isCapturing: boolean
+  pipelineState: PipelineState
+}
 
 function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === 'user'
@@ -34,6 +44,7 @@ function MessageBubble({ message }: { message: Message }) {
           bgcolor: isUser ? 'primary.main' : 'action.hover',
           color: isUser ? 'primary.contrastText' : 'text.primary',
           maxWidth: '75%',
+          opacity: message.partial ? 0.85 : 1,
         }}
       >
         <Typography variant="body2" sx={{ lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
@@ -44,7 +55,7 @@ function MessageBubble({ message }: { message: Message }) {
   )
 }
 
-function WelcomeScreen({ onSend }: { onSend: (text: string) => void }) {
+function WelcomeScreen({ onSend, micProps }: { onSend: (t: string) => void; micProps: MicProps }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', px: 2, gap: 3 }}>
       <img src={ariaLogo} alt="Aria" style={{ width: 80, height: 80 }} />
@@ -52,7 +63,7 @@ function WelcomeScreen({ onSend }: { onSend: (text: string) => void }) {
         What's on your mind?
       </Typography>
       <Box sx={{ width: '100%', maxWidth: 640 }}>
-        <ChatInput onSend={onSend} />
+        <ChatInput onSend={onSend} {...micProps} />
       </Box>
     </Box>
   )
@@ -61,9 +72,10 @@ function WelcomeScreen({ onSend }: { onSend: (text: string) => void }) {
 interface ChatAreaProps {
   messages: Message[]
   onSend: (text: string) => void
+  micProps: MicProps
 }
 
-export default function ChatArea({ messages, onSend }: ChatAreaProps) {
+export default function ChatArea({ messages, onSend, micProps }: ChatAreaProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -71,7 +83,7 @@ export default function ChatArea({ messages, onSend }: ChatAreaProps) {
   }, [messages])
 
   if (messages.length === 0) {
-    return <WelcomeScreen onSend={onSend} />
+    return <WelcomeScreen onSend={onSend} micProps={micProps} />
   }
 
   return (
@@ -82,7 +94,7 @@ export default function ChatArea({ messages, onSend }: ChatAreaProps) {
         ))}
         <div ref={bottomRef} />
       </Box>
-      <ChatInput onSend={onSend} />
+      <ChatInput onSend={onSend} {...micProps} />
     </Box>
   )
 }
