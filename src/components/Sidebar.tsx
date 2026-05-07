@@ -26,29 +26,32 @@ const HISTORY: { id: string; title: string }[] = [
 
 interface SidebarProps {
   open: boolean
+  isMobile: boolean
   theme: 'light' | 'dark'
   onToggleSidebar: () => void
   onToggleTheme: () => void
   onNewChat: () => void
 }
 
-export default function Sidebar({ open, theme, onToggleSidebar, onToggleTheme, onNewChat }: SidebarProps) {
+export default function Sidebar({ open, isMobile, theme, onToggleSidebar, onToggleTheme, onNewChat }: SidebarProps) {
   return (
     <Drawer
-      variant="permanent"
+      variant={isMobile ? 'temporary' : 'permanent'}
+      open={open}
+      onClose={isMobile ? onToggleSidebar : undefined}
       sx={{
-        width: open ? DRAWER_WIDTH : MINI_WIDTH,
+        width: isMobile ? 0 : (open ? DRAWER_WIDTH : MINI_WIDTH),
         flexShrink: 0,
         transition: 'width 0.2s',
         '& .MuiDrawer-paper': {
-          width: open ? DRAWER_WIDTH : MINI_WIDTH,
+          width: isMobile ? DRAWER_WIDTH : (open ? DRAWER_WIDTH : MINI_WIDTH),
           boxSizing: 'border-box',
           borderRight: '1px solid',
           borderColor: 'divider',
           display: 'flex',
           flexDirection: 'column',
           overflowX: 'hidden',
-          transition: 'width 0.2s',
+          transition: isMobile ? undefined : 'width 0.2s',
         },
       }}
     >

@@ -1,6 +1,9 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { createTheme, ThemeProvider, CssBaseline } from '@mui/material'
 import Box from '@mui/material/Box'
+import IconButton from '@mui/material/IconButton'
+import useMediaQuery from '@mui/material/useMediaQuery'
+import MenuIcon from '@mui/icons-material/Menu'
 import { useTheme } from './hooks/useTheme'
 import { useWebSocket } from './hooks/useWebSocket'
 import { useAudioCapture } from './hooks/useAudioCapture'
@@ -13,7 +16,8 @@ import type { PipelineState, ServerMessage } from './types/server'
 
 function App() {
   const { theme, toggle } = useTheme()
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const isMobile = useMediaQuery('(max-width:768px)')
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768)
   const [messages, setMessages] = useState<Message[]>([])
   const [pipelineState, setPipelineState] = useState<PipelineState>('idle')
 
@@ -109,9 +113,17 @@ function App() {
   const handleNewChat = useCallback(() => {
     setMessages([])
     setPipelineState('idle')
-  }, [])
+    if (isMobile) setSidebarOpen(false)
+  }, [isMobile])
 
-  const micProps = { onMicStart: handleMicStart, onMicEnd: handleMicEnd, onInterrupt: handleInterrupt, micLevel, isCapturing, pipelineState }
+  const micProps = {
+    onMicStart: handleMicStart,
+    onMicEnd: handleMicEnd,
+    onInterrupt: handleInterrupt,
+    micLevel,
+    isCapturing,
+    pipelineState,
+  }
 
   return (
     <ThemeProvider theme={muiTheme}>
@@ -119,13 +131,22 @@ function App() {
       <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
         <Sidebar
           open={sidebarOpen}
+          isMobile={isMobile}
           theme={theme}
-          onToggleSidebar={() => setSidebarOpen((o) => !o)}
+          onToggleSidebar={() => setSidebarOpen(o => !o)}
           onToggleTheme={toggle}
           onNewChat={handleNewChat}
         />
-        <Box component="main" sx={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <ConnectionStatus state={connectionState} />
+        <Box component="main" sx={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', px: 1 }}>
+            {isMobile && (
+              <IconButton onClick={() => setSidebarOpen(true)} aria-label="Open sidebar" size="small">
+                <MenuIcon fontSize="small" />
+              </IconButton>
+            )}
+            <Box sx={{ flexGrow: 1 }} />
+            <ConnectionStatus state={connectionState} />
+          </Box>
           <ChatArea messages={messages} onSend={handleSend} micProps={micProps} />
         </Box>
       </Box>
