@@ -5,7 +5,6 @@ import InputBase from '@mui/material/InputBase'
 import Paper from '@mui/material/Paper'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
-import MicIcon from '@mui/icons-material/Mic'
 import MicNoneIcon from '@mui/icons-material/MicNone'
 import SendIcon from '@mui/icons-material/Send'
 import StopCircleIcon from '@mui/icons-material/StopCircle'
@@ -39,12 +38,14 @@ export default function ChatInput({
   disabled,
 }: ChatInputProps) {
   const [value, setValue] = useState('')
-  const busy = pipelineState !== 'idle'
+
+  const voiceActive = isCapturing || pipelineState !== 'idle'
+  const hasText = value.trim().length > 0
+  const stateLabel = STATE_LABEL[pipelineState]
 
   const submit = () => {
-    const trimmed = value.trim()
-    if (!trimmed || busy) return
-    onSend(trimmed)
+    if (!hasText || voiceActive) return
+    onSend(value.trim())
     setValue('')
   }
 
@@ -55,10 +56,13 @@ export default function ChatInput({
     }
   }
 
-  const handleMicDown = () => { if (!busy) onMicStart() }
-  const handleMicUp   = () => { if (isCapturing) onMicEnd() }
-
-  const stateLabel = STATE_LABEL[pipelineState]
+  const handleStop = () => {
+    if (isCapturing || pipelineState === 'listening') {
+      onMicEnd()
+    } else {
+      onInterrupt()
+    }
+  }
 
   return (
     <Box sx={{ px: 2, pb: 3 }}>
@@ -80,7 +84,7 @@ export default function ChatInput({
           px: 2,
           py: 1,
           border: '1px solid',
-          borderColor: isCapturing ? 'primary.main' : 'divider',
+          borderColor: voiceActive ? 'primary.main' : 'divider',
           borderRadius: 3,
           maxWidth: 768,
           mx: 'auto',
@@ -95,49 +99,50 @@ export default function ChatInput({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={onKeyDown}
-          disabled={disabled || busy}
+          disabled={disabled || voiceActive}
           sx={{ fontSize: 15, py: 0.5 }}
         />
 
-        <Tooltip title={isCapturing ? 'Release to send' : 'Hold to talk'}>
-          <IconButton
-            size="small"
-            aria-label="Push to talk"
-            disabled={disabled || pipelineState === 'processing' || pipelineState === 'speaking'}
-            onMouseDown={handleMicDown}
-            onMouseUp={handleMicUp}
-            onMouseLeave={handleMicUp}
-            onTouchStart={handleMicDown}
-            onTouchEnd={handleMicUp}
-            sx={{
-              color: isCapturing ? 'primary.main' : 'text.secondary',
-              transform: isCapturing ? `scale(${1 + micLevel * 0.4})` : 'scale(1)',
-              transition: isCapturing ? 'transform 0.05s ease-out' : 'transform 0.2s ease-out, color 0.2s',
-            }}
-          >
-            {isCapturing ? <MicIcon fontSize="small" /> : <MicNoneIcon fontSize="small" />}
-          </IconButton>
-        </Tooltip>
-
-        {pipelineState === 'speaking' ? (
+        {voiceActive ? (
           <Tooltip title="Stop">
-            <IconButton size="small" onClick={onInterrupt} aria-label="Stop" color="primary">
-              <StopCircleIcon fontSize="small" />
+            <IconButton
+              size="small"
+              onClick={handleStop}
+              aria-label="Stop"
+              color="primary"
+              sx={{
+                transform: isCapturing ? `scale(${1 + micLevel * 0.35})` : 'scale(1)',
+                transition: 'transform 0.05s ease-out',
+              }}
+            >
+              <StopCircleIcon />
             </IconButton>
           </Tooltip>
-        ) : (
+        ) : hasText ? (
           <Tooltip title="Send">
             <span>
               <IconButton
                 size="small"
                 onClick={submit}
-                disabled={disabled || busy || !value.trim()}
+                disabled={disabled}
                 aria-label="Send message"
                 color="primary"
               >
                 <SendIcon fontSize="small" />
               </IconButton>
             </span>
+          </Tooltip>
+        ) : (
+          <Tooltip title="Voice">
+            <IconButton
+              size="small"
+              onClick={onMicStart}
+              disabled={disabled}
+              aria-label="Start voice"
+              color="default"
+            >
+              <MicNoneIcon fontSize="small" />
+            </IconButton>
           </Tooltip>
         )}
       </Paper>
