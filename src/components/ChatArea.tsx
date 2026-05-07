@@ -55,6 +55,55 @@ function MessageBubble({ message }: { message: Message }) {
   )
 }
 
+function TypingIndicator() {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: 1.5,
+        maxWidth: 768,
+        width: '100%',
+        mx: 'auto',
+      }}
+    >
+      <Avatar sx={{ width: 28, height: 28, fontSize: 13, bgcolor: 'primary.main', color: 'primary.contrastText', mt: 0.5 }}>
+        A
+      </Avatar>
+      <Box
+        sx={{
+          px: 2,
+          py: 1.5,
+          borderRadius: '18px 18px 18px 4px',
+          bgcolor: 'action.hover',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.75,
+        }}
+      >
+        {[0, 1, 2].map((i) => (
+          <Box
+            key={i}
+            sx={{
+              width: 7,
+              height: 7,
+              borderRadius: '50%',
+              bgcolor: 'text.secondary',
+              animation: 'typing-bounce 1.2s ease-in-out infinite',
+              animationDelay: `${i * 0.2}s`,
+              '@keyframes typing-bounce': {
+                '0%, 60%, 100%': { transform: 'translateY(0)' },
+                '30%': { transform: 'translateY(-6px)' },
+              },
+            }}
+          />
+        ))}
+      </Box>
+    </Box>
+  )
+}
+
 function WelcomeScreen({ onSend, micProps }: { onSend: (t: string) => void; micProps: MicProps }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', px: 2, gap: 3 }}>
@@ -77,12 +126,15 @@ interface ChatAreaProps {
 
 export default function ChatArea({ messages, onSend, micProps }: ChatAreaProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
+  const { pipelineState } = micProps
+  const hasPartial = messages.some(m => m.partial && m.role === 'assistant')
+  const showTyping = pipelineState === 'processing' && !hasPartial
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages, showTyping])
 
-  if (messages.length === 0) {
+  if (messages.length === 0 && !showTyping) {
     return <WelcomeScreen onSend={onSend} micProps={micProps} />
   }
 
@@ -92,6 +144,7 @@ export default function ChatArea({ messages, onSend, micProps }: ChatAreaProps) 
         {messages.map((msg) => (
           <MessageBubble key={msg.id} message={msg} />
         ))}
+        {showTyping && <TypingIndicator />}
         <div ref={bottomRef} />
       </Box>
       <ChatInput onSend={onSend} {...micProps} />
