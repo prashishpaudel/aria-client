@@ -5,8 +5,8 @@ import InputBase from '@mui/material/InputBase'
 import Paper from '@mui/material/Paper'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
-import MicNoneIcon from '@mui/icons-material/MicNone'
-import SendIcon from '@mui/icons-material/Send'
+import GraphicEqIcon from '@mui/icons-material/GraphicEq'
+import ArrowCircleUpIcon from '@mui/icons-material/ArrowCircleUp'
 import StopCircleIcon from '@mui/icons-material/StopCircle'
 import type { PipelineState } from '../types/server'
 
@@ -106,7 +106,7 @@ export default function ChatInput({
         {voiceActive ? (
           <Tooltip title="Stop">
             <IconButton
-              size="small"
+              size="medium"
               onClick={handleStop}
               aria-label="Stop"
               color="primary"
@@ -115,33 +115,33 @@ export default function ChatInput({
                 transition: 'transform 0.05s ease-out',
               }}
             >
-              <StopCircleIcon />
+              <StopCircleIcon fontSize="medium" />
             </IconButton>
           </Tooltip>
         ) : hasText ? (
           <Tooltip title="Send">
             <span>
               <IconButton
-                size="small"
+                size="medium"
                 onClick={submit}
                 disabled={disabled}
                 aria-label="Send message"
                 color="primary"
               >
-                <SendIcon fontSize="small" />
+                <ArrowCircleUpIcon fontSize="medium" />
               </IconButton>
             </span>
           </Tooltip>
         ) : (
           <Tooltip title="Voice">
             <IconButton
-              size="small"
+              size="medium"
               onClick={onMicStart}
               disabled={disabled}
               aria-label="Start voice"
               color="default"
             >
-              <MicNoneIcon fontSize="small" />
+              <GraphicEqIcon fontSize="medium" />
             </IconButton>
           </Tooltip>
         )}
