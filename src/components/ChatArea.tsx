@@ -174,7 +174,15 @@ export default function ChatArea({ messages, onSend, micProps }: ChatAreaProps) 
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Box sx={{ flexGrow: 1, overflowY: 'auto', px: 2, py: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box sx={{
+          flexGrow: 1, overflowY: 'auto', px: 2, py: 3, display: 'flex', flexDirection: 'column', gap: 2,
+          '&::-webkit-scrollbar': { width: 4 },
+          '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
+          '&::-webkit-scrollbar-thumb': { bgcolor: 'text.disabled', borderRadius: 8 },
+          '&::-webkit-scrollbar-thumb:hover': { bgcolor: 'text.secondary' },
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'rgba(128,128,128,0.4) transparent',
+        }}>
         {messages.map((msg) => (
           <MessageBubble key={msg.id} message={msg} />
         ))}
