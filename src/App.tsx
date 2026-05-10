@@ -123,7 +123,11 @@ function App() {
   const handleInterrupt = useCallback(() => {
     clearAudio()
     sendJSON({ type: 'interrupt' })
-  }, [clearAudio, sendJSON])
+    if (continuousMode) {
+      setContinuousMode(false)
+      pauseVAD()
+    }
+  }, [clearAudio, sendJSON, continuousMode, pauseVAD])
 
   const handleSend = useCallback((text: string) => {
     setMessages(prev => [...prev, {
