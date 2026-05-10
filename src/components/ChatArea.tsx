@@ -9,11 +9,10 @@ import ChatInput from './ChatInput'
 import ariaLogo from '../assets/aria-logo.svg'
 
 interface MicProps {
-  onMicStart: () => void
-  onMicEnd: () => void
+  onVoiceToggle: () => void
   onInterrupt: () => void
   micLevel: number
-  isCapturing: boolean
+  continuousMode: boolean
   pipelineState: PipelineState
 }
 

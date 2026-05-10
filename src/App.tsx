@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createTheme, ThemeProvider, CssBaseline } from '@mui/material'
 import Box from '@mui/material/Box'
 import IconButton from '@mui/material/IconButton'
@@ -6,7 +6,7 @@ import useMediaQuery from '@mui/material/useMediaQuery'
 import MenuIcon from '@mui/icons-material/Menu'
 import { useTheme } from './hooks/useTheme'
 import { useWebSocket } from './hooks/useWebSocket'
-import { useAudioCapture } from './hooks/useAudioCapture'
+import { useVAD } from './hooks/useVAD'
 import { useAudioPlayback } from './hooks/useAudioPlayback'
 import Sidebar from './components/Sidebar'
 import ChatArea from './components/ChatArea'
@@ -14,12 +14,27 @@ import ConnectionStatus from './components/ConnectionStatus'
 import type { Message } from './types/chat'
 import type { PipelineState, ServerMessage } from './types/server'
 
+function float32ToBase64(audio: Float32Array): string {
+  const int16 = new Int16Array(audio.length)
+  for (let i = 0; i < audio.length; i++) {
+    const s = Math.max(-1, Math.min(1, audio[i]))
+    int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff
+  }
+  const bytes = new Uint8Array(int16.buffer)
+  let binary = ''
+  const chunk = 8192
+  for (let i = 0; i < bytes.length; i += chunk)
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk))
+  return btoa(binary)
+}
+
 function App() {
   const { theme, toggle } = useTheme()
   const isMobile = useMediaQuery('(max-width:768px)')
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768)
   const [messages, setMessages] = useState<Message[]>([])
   const [pipelineState, setPipelineState] = useState<PipelineState>('idle')
+  const [continuousMode, setContinuousMode] = useState(false)
 
   const muiTheme = useMemo(
     () =>
@@ -33,7 +48,6 @@ function App() {
   )
 
   const { enqueueAudio, clear: clearAudio } = useAudioPlayback()
-  const { micLevel, isCapturing, startCapture, stopCapture } = useAudioCapture()
   const enqueueAudioRef = useRef(enqueueAudio)
   enqueueAudioRef.current = enqueueAudio
 
@@ -54,14 +68,12 @@ function App() {
         setMessages(prev => {
           const partialIdx = prev.findIndex(m => m.partial && m.role === 'assistant')
           if (msg.partial) {
-            if (partialIdx === -1) {
+            if (partialIdx === -1)
               return [...prev, { id: crypto.randomUUID(), role: 'assistant', content: msg.text, timestamp: new Date(), partial: true }]
-            }
             return prev.map((m, i) => i === partialIdx ? { ...m, content: msg.text } : m)
           } else {
-            if (partialIdx !== -1) {
+            if (partialIdx !== -1)
               return prev.map((m, i) => i === partialIdx ? { ...m, content: msg.text, partial: false } : m)
-            }
             return [...prev, { id: crypto.randomUUID(), role: 'assistant', content: msg.text, timestamp: new Date() }]
           }
         })
@@ -75,30 +87,43 @@ function App() {
     }
   }, [])
 
-  const { connectionState, sendAudio, sendJSON } = useWebSocket({ onMessage: handleServerMessage })
+  const { connectionState, sendJSON } = useWebSocket({ onMessage: handleServerMessage })
+  const sendJSONRef = useRef(sendJSON)
+  sendJSONRef.current = sendJSON
 
-  const handleMicStart = useCallback(async () => {
-    if (isCapturing) return
-    sendJSON({ type: 'start' })
-    try {
-      await startCapture(sendAudio)
-    } catch (err) {
-      console.error('[mic]', err)
-      sendJSON({ type: 'stop' })
+  const handleSpeechEnd = useCallback((audio: Float32Array) => {
+    sendJSONRef.current({ type: 'voice', audio: float32ToBase64(audio) })
+  }, [])
+
+  const { speechProb, listening, start: startVAD, pause: pauseVAD } = useVAD({
+    onSpeechEnd: handleSpeechEnd,
+  })
+
+  // Pause VAD while pipeline busy to prevent AI voice triggering itself
+  useEffect(() => {
+    if (!continuousMode) return
+    if (pipelineState === 'idle' && !listening) startVAD()
+    else if (pipelineState !== 'idle' && listening) pauseVAD()
+  }, [pipelineState, continuousMode, listening, startVAD, pauseVAD])
+
+  const handleVoiceToggle = useCallback(async () => {
+    if (continuousMode) {
+      setContinuousMode(false)
+      pauseVAD()
+      return
     }
-  }, [isCapturing, sendJSON, startCapture, sendAudio])
-
-  const handleMicEnd = useCallback(() => {
-    if (!isCapturing) return
-    stopCapture()
-    sendJSON({ type: 'stop' })
-  }, [isCapturing, stopCapture, sendJSON])
+    try {
+      await startVAD()
+      setContinuousMode(true)
+    } catch (err) {
+      console.error('[vad]', err)
+    }
+  }, [continuousMode, startVAD, pauseVAD])
 
   const handleInterrupt = useCallback(() => {
-    stopCapture()
     clearAudio()
     sendJSON({ type: 'interrupt' })
-  }, [stopCapture, clearAudio, sendJSON])
+  }, [clearAudio, sendJSON])
 
   const handleSend = useCallback((text: string) => {
     setMessages(prev => [...prev, {
@@ -117,11 +142,10 @@ function App() {
   }, [isMobile])
 
   const micProps = {
-    onMicStart: handleMicStart,
-    onMicEnd: handleMicEnd,
+    onVoiceToggle: handleVoiceToggle,
     onInterrupt: handleInterrupt,
-    micLevel,
-    isCapturing,
+    micLevel: speechProb,
+    continuousMode,
     pipelineState,
   }
 
