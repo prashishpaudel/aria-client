@@ -5,7 +5,6 @@ import IconButton from '@mui/material/IconButton'
 import InputBase from '@mui/material/InputBase'
 import Paper from '@mui/material/Paper'
 import Tooltip from '@mui/material/Tooltip'
-import Typography from '@mui/material/Typography'
 import GraphicEqIcon from '@mui/icons-material/GraphicEq'
 import ArrowCircleUpIcon from '@mui/icons-material/ArrowCircleUp'
 import StopCircleIcon from '@mui/icons-material/StopCircle'
@@ -43,12 +42,6 @@ function AnimatedDots({ micLevel }: { micLevel: number }) {
   )
 }
 
-const STATE_LABEL: Partial<Record<PipelineState, string>> = {
-  listening:  'Listening…',
-  processing: 'Thinking…',
-  speaking:   'Speaking…',
-}
-
 interface ChatInputProps {
   onSend: (text: string) => void
   onVoiceToggle: () => void
@@ -72,7 +65,6 @@ export default function ChatInput({
 
   const pipelineBusy = pipelineState !== 'idle'
   const hasText = value.trim().length > 0
-  const stateLabel = continuousMode ? (STATE_LABEL[pipelineState] ?? 'Ready…') : STATE_LABEL[pipelineState]
 
   const submit = () => {
     if (!hasText || pipelineBusy || continuousMode) return
@@ -89,15 +81,6 @@ export default function ChatInput({
 
   return (
     <Box sx={{ px: 2, pb: 3 }}>
-      {stateLabel && (
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ display: 'block', textAlign: 'center', mb: 0.5 }}
-        >
-          {stateLabel}
-        </Typography>
-      )}
       <Paper
         elevation={0}
         sx={{
