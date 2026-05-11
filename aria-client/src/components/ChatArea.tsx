@@ -12,6 +12,7 @@ interface MicProps {
   onVoiceToggle: () => void
   onInterrupt: () => void
   micLevel: number
+  playbackLevel: number
   continuousMode: boolean
   pipelineState: PipelineState
 }
@@ -159,9 +160,13 @@ interface ChatAreaProps {
 
 export default function ChatArea({ messages, onSend, micProps }: ChatAreaProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
-  const { pipelineState } = micProps
+  const { pipelineState, continuousMode, playbackLevel, micLevel } = micProps
   const hasPartial = messages.some(m => m.partial && m.role === 'assistant')
   const showTyping = pipelineState === 'processing' && !hasPartial
+  const userSpeaking = micLevel > 0.3
+  const haloAlpha = playbackLevel > 0.01
+    ? playbackLevel * 0.5
+    : userSpeaking ? 0.07 : 0
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -172,7 +177,7 @@ export default function ChatArea({ messages, onSend, micProps }: ChatAreaProps) 
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
       <Box sx={{
           flexGrow: 1, overflowY: 'auto', px: 2, py: 3, display: 'flex', flexDirection: 'column', gap: 2,
           '&::-webkit-scrollbar': { width: 4 },
@@ -188,6 +193,20 @@ export default function ChatArea({ messages, onSend, micProps }: ChatAreaProps) 
         {showTyping && <TypingIndicator />}
         <div ref={bottomRef} />
       </Box>
+      {/* Voice mode halo — half-circle from bottom, brightness driven by TTS amplitude */}
+      <Box
+        sx={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 80,
+          height: 220,
+          pointerEvents: 'none',
+          opacity: continuousMode ? 1 : 0,
+          background: `radial-gradient(ellipse at bottom, hsl(192, 67%, 50%, ${haloAlpha}) 0%, hsl(192, 67%, 50%, 0) 70%)`,
+          transition: 'opacity 0.6s ease, background 0.08s ease-out',
+        }}
+      />
       <ChatInput onSend={onSend} {...micProps} />
     </Box>
   )

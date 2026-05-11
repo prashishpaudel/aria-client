@@ -48,7 +48,7 @@ function App() {
     [theme],
   )
 
-  const { enqueueAudio, clear: clearAudio } = useAudioPlayback()
+  const { enqueueAudio, clear: clearAudio, playbackLevel } = useAudioPlayback()
   const enqueueAudioRef = useRef(enqueueAudio)
   enqueueAudioRef.current = enqueueAudio
 
@@ -214,6 +214,7 @@ function App() {
     onVoiceToggle: handleVoiceToggle,
     onInterrupt: handleInterrupt,
     micLevel: speechProb,
+    playbackLevel,
     continuousMode,
     pipelineState,
   }
