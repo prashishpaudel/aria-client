@@ -59,8 +59,8 @@ curl http://localhost:8000/v1/chat/completions \
 
 ```bash
 source venv/bin/activate
-python stt_test.py
-python tts_test.py
+python tests/stt_test.py
+python tests/tts_test.py
 ```
 
 ## 6. Run FastAPI
