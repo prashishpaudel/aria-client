@@ -51,6 +51,46 @@ function App() {
   const enqueueAudioRef = useRef(enqueueAudio)
   enqueueAudioRef.current = enqueueAudio
 
+  // Throttled word-by-word reveal for voice mode (paces text with TTS)
+  const continuousModeRef = useRef(continuousMode)
+  continuousModeRef.current = continuousMode
+  const revealRef = useRef<{ messageId: string | null; target: string; shown: string; finalPending: boolean }>({
+    messageId: null, target: '', shown: '', finalPending: false,
+  })
+  const revealTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const REVEAL_INTERVAL_MS = 200
+
+  const stopReveal = useCallback(() => {
+    if (revealTimerRef.current) {
+      clearInterval(revealTimerRef.current)
+      revealTimerRef.current = null
+    }
+  }, [])
+
+  const tickReveal = useCallback(() => {
+    const r = revealRef.current
+    if (!r.messageId) { stopReveal(); return }
+    if (r.shown.length < r.target.length) {
+      const rest = r.target.slice(r.shown.length)
+      const m = rest.match(/^\s*\S+/)
+      const adv = m ? m[0].length : rest.length
+      r.shown = r.target.slice(0, r.shown.length + adv)
+      const id = r.messageId
+      const text = r.shown
+      setMessages(prev => prev.map(msg => msg.id === id ? { ...msg, content: text } : msg))
+    } else if (r.finalPending) {
+      const id = r.messageId
+      setMessages(prev => prev.map(msg => msg.id === id ? { ...msg, partial: false } : msg))
+      revealRef.current = { messageId: null, target: '', shown: '', finalPending: false }
+      stopReveal()
+    }
+  }, [stopReveal])
+
+  const ensureRevealRunning = useCallback(() => {
+    if (revealTimerRef.current) return
+    revealTimerRef.current = setInterval(tickReveal, REVEAL_INTERVAL_MS)
+  }, [tickReveal])
+
   const handleServerMessage = useCallback((msg: ServerMessage) => {
     switch (msg.type) {
       case 'status':
@@ -65,18 +105,36 @@ function App() {
         }])
         break
       case 'transcript_assistant':
-        setMessages(prev => {
-          const partialIdx = prev.findIndex(m => m.partial && m.role === 'assistant')
-          if (msg.partial) {
-            if (partialIdx === -1)
-              return [...prev, { id: crypto.randomUUID(), role: 'assistant', content: msg.text, timestamp: new Date(), partial: true }]
-            return prev.map((m, i) => i === partialIdx ? { ...m, content: msg.text } : m)
-          } else {
-            if (partialIdx !== -1)
-              return prev.map((m, i) => i === partialIdx ? { ...m, content: msg.text, partial: false } : m)
-            return [...prev, { id: crypto.randomUUID(), role: 'assistant', content: msg.text, timestamp: new Date() }]
-          }
-        })
+        if (continuousModeRef.current) {
+          // Voice mode: queue full text, reveal one word per tick to match TTS pace
+          setMessages(prev => {
+            const existing = prev.find(m => m.partial && m.role === 'assistant')
+            if (!existing) {
+              const id = crypto.randomUUID()
+              revealRef.current = { messageId: id, target: msg.text, shown: '', finalPending: !msg.partial }
+              ensureRevealRunning()
+              return [...prev, { id, role: 'assistant', content: '', timestamp: new Date(), partial: true }]
+            }
+            revealRef.current.target = msg.text
+            if (!msg.partial) revealRef.current.finalPending = true
+            ensureRevealRunning()
+            return prev
+          })
+        } else {
+          // Text mode: render immediately as tokens arrive
+          setMessages(prev => {
+            const partialIdx = prev.findIndex(m => m.partial && m.role === 'assistant')
+            if (msg.partial) {
+              if (partialIdx === -1)
+                return [...prev, { id: crypto.randomUUID(), role: 'assistant', content: msg.text, timestamp: new Date(), partial: true }]
+              return prev.map((m, i) => i === partialIdx ? { ...m, content: msg.text } : m)
+            } else {
+              if (partialIdx !== -1)
+                return prev.map((m, i) => i === partialIdx ? { ...m, content: msg.text, partial: false } : m)
+              return [...prev, { id: crypto.randomUUID(), role: 'assistant', content: msg.text, timestamp: new Date() }]
+            }
+          })
+        }
         break
       case 'audio':
         enqueueAudioRef.current(msg.data, msg.sampleRate)
@@ -85,7 +143,7 @@ function App() {
         console.error('[aria]', msg.message)
         break
     }
-  }, [])
+  }, [ensureRevealRunning])
 
   const { connectionState, sendJSON } = useWebSocket({ onMessage: handleServerMessage })
   const sendJSONRef = useRef(sendJSON)
@@ -123,11 +181,13 @@ function App() {
   const handleInterrupt = useCallback(() => {
     clearAudio()
     sendJSON({ type: 'interrupt' })
+    revealRef.current = { messageId: null, target: '', shown: '', finalPending: false }
+    stopReveal()
     if (continuousMode) {
       setContinuousMode(false)
       pauseVAD()
     }
-  }, [clearAudio, sendJSON, continuousMode, pauseVAD])
+  }, [clearAudio, sendJSON, continuousMode, pauseVAD, stopReveal])
 
   const handleSend = useCallback((text: string) => {
     setMessages(prev => [...prev, {
@@ -142,8 +202,10 @@ function App() {
   const handleNewChat = useCallback(() => {
     setMessages([])
     setPipelineState('idle')
+    revealRef.current = { messageId: null, target: '', shown: '', finalPending: false }
+    stopReveal()
     if (isMobile) setSidebarOpen(false)
-  }, [isMobile])
+  }, [isMobile, stopReveal])
 
   const micProps = {
     onVoiceToggle: handleVoiceToggle,
