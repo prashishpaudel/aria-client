@@ -168,6 +168,8 @@ function App() {
     if (continuousMode) {
       setContinuousMode(false)
       pauseVAD()
+      clearAudio()
+      sendJSON({ type: 'interrupt' })
       return
     }
     try {
@@ -176,7 +178,7 @@ function App() {
     } catch (err) {
       console.error('[vad]', err)
     }
-  }, [continuousMode, startVAD, pauseVAD])
+  }, [continuousMode, startVAD, pauseVAD, clearAudio, sendJSON])
 
   const handleInterrupt = useCallback(() => {
     clearAudio()
