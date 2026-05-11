@@ -41,14 +41,22 @@ async def run_stt(audio_np):
     text = await loop.run_in_executor(None, _transcribe)
     return text.strip()
 
-async def run_llm_stream(history: list):
+VOICE_SYSTEM_PROMPT = (
+    "You are a spoken voice assistant. Reply in 1-2 short sentences. "
+    "Use plain conversational English — no markdown, no bullet lists, no code blocks. "
+    "Skip preambles like 'Sure' or 'Of course'. Get to the point."
+)
+
+
+async def run_llm_stream(history: list, system: str | None = None):
+    messages = ([{"role": "system", "content": system}] if system else []) + history
     async with httpx.AsyncClient(timeout=None) as client:
         async with client.stream(
             "POST",
             VLLM_URL,
             json={
                 "model": LLM_MODEL,
-                "messages": history,
+                "messages": messages,
                 "stream": True,
             },
         ) as resp:
@@ -113,7 +121,7 @@ async def handle_llm_tts(ws: WebSocket, user_text: str, history: list):
     try:
         await ws.send_json({"type": "status", "state": "speaking"})
 
-        async for token in run_llm_stream(history):
+        async for token in run_llm_stream(history, system=VOICE_SYSTEM_PROMPT):
             full_text += token
             buffer += token
 
