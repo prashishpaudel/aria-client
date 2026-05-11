@@ -25,7 +25,7 @@ function AnimatedDots({ micLevel }: { micLevel: number }) {
             sx={{
               width: 5,
               borderRadius: 3,
-              bgcolor: 'primary.main',
+              bgcolor: 'secondary.main',
               height: h,
               opacity: 0.5 + micLevel * 0.5,
               transition: 'height 0.08s ease-out, opacity 0.08s ease-out',
@@ -145,7 +145,7 @@ export default function ChatInput({
         ) : hasText ? (
           <Tooltip title="Send">
             <span>
-              <IconButton size="medium" onClick={submit} disabled={disabled} aria-label="Send" color="primary">
+              <IconButton size="medium" onClick={submit} disabled={disabled} aria-label="Send" color="secondary">
                 <ArrowCircleUpIcon fontSize="medium" />
               </IconButton>
             </span>

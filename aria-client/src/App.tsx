@@ -41,7 +41,8 @@ function App() {
       createTheme({
         palette: {
           mode: theme,
-          primary: { main: theme === 'light' ? '#000000' : '#ffffff' },
+          primary:   { main: theme === 'light' ? '#000000' : '#ffffff' },
+          secondary: { main: '#27B7D8' },
         },
       }),
     [theme],
