@@ -16,7 +16,7 @@ LLM_MODEL = "Qwen/Qwen2.5-14B-Instruct"
 # ---------- LOAD MODELS ----------
 print("Loading STT (Parakeet)...")
 stt_model = nemo_asr.models.ASRModel.from_pretrained(
-    model_name="nvidia/parakeet-tdt-0.6b-v2"
+    model_name="nvidia/parakeet-tdt-0.6b-v3"
 ).to("cuda")
 stt_model.eval()
 
